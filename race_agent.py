@@ -70,8 +70,8 @@ class CarAgent:
         self.batch_size = 128
         
         # Exploration parameters
-        self.epsilon = 1.0
-        self.epsilon_min = 0.05
+        self.epsilon = 0.02
+        self.epsilon_min = 0.001
         self.epsilon_decay = 0.995
         
         # Initialize network and optimizer

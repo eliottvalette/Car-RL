@@ -11,7 +11,7 @@ STATE_SIZE = 16
 ACTION_SIZE = 4
 
 # Constants
-LOAD_MODEL = False
+LOAD_MODEL = True
 
 # Initialize environment and agent
 env = CarRacingGame()
@@ -31,7 +31,7 @@ torch.manual_seed(42)
 
 # Load model if specified
 if LOAD_MODEL:
-    agent.model.load_state_dict(torch.load('models/model.pth'))
+    agent.load("models/model.pth")
 
 for episode in range(EPISODES):
     state = env.reset()
@@ -48,7 +48,7 @@ for episode in range(EPISODES):
         total_reward += reward
         step_count += 1
 
-        if episode%10 == 0:
+        if episode%1 == 0:
             env.render(fps = 1000)
 
     scores.append(total_reward)
