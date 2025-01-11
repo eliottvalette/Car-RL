@@ -64,7 +64,7 @@ for episode in range(EPISODES):
         print(f"Loss: {loss:.4f}")
 
     # Decay epsilon
-    agent.epsilon = max(agent.epsilon_min, agent.epsilon * agent.epsilon_decay)
+    agent.epsilon = 0 # max(agent.epsilon_min, agent.epsilon * agent.epsilon_decay)
 
     # Save model periodically
     if episode % 100 == 0:
