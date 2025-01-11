@@ -21,6 +21,7 @@ for episode in range(EPISODES):
     state = env.reset()
     done = False
     total_reward = 0
+    step_count = 0
 
     while not done:
         action = agent.act(state)
@@ -29,6 +30,7 @@ for episode in range(EPISODES):
         agent.replay()
         state = next_state
         total_reward += reward
+        step_count += 1
 
         if episode%1 == 0:
             env.render(fps = 1000)  # Optional, for visualization
@@ -38,7 +40,12 @@ for episode in range(EPISODES):
     scores.append(total_reward)
     epsilons.append(agent.epsilon)
 
-    print(f"Episode: {episode + 1}/{EPISODES}, Score: {total_reward}, Epsilon: {agent.epsilon:.2f}")
+    print(f"Episode: {episode + 1}/{EPISODES}")
+    print(f"Steps: {step_count}")
+    print(f"Laps: {env.laps}")
+    print(f"Total Reward: {total_reward:.2f}")
+    print(f"Epsilon: {agent.epsilon:.2f}")
+    print("-" * 40)
 
     # Update target network every 10 episodes
     if episode % 10 == 0:
