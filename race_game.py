@@ -46,9 +46,9 @@ class CarRacingGame:
         # Rendering
         self.clock = pygame.time.Clock()
 
-        self.max_steps = 1000  # Add this line
-        self.steps = 0         # Add this line
-        self.current_reward = 0  # Add this line
+        self.max_steps = 2_000  
+        self.steps = 0         
+        self.current_reward = 0  
 
     def reset(self):
         self.car_pos = [150, 150]
@@ -57,8 +57,8 @@ class CarRacingGame:
         self.current_checkpoint = 0
         self.laps = 0
         self.done = False
-        self.steps = 0        # Add this line
-        self.current_reward = 0  # Add this line
+        self.steps = 0        
+        self.current_reward = 0  
         return self.get_state()
 
     def step(self, action):
@@ -67,9 +67,9 @@ class CarRacingGame:
         prev_pos = self.car_pos.copy()  # Store previous position
         
         if action == 0:  # Accelerate
-            self.car_speed = min(self.car_speed + 0.1, 5)
+            self.car_speed = min(self.car_speed + 0.1, 2)
         elif action == 1:  # Decelerate
-            self.car_speed = max(self.car_speed - 0.1, -2)
+            self.car_speed = max(self.car_speed - 0.1, -0.5)
         elif action == 2:  # Turn Left
             self.car_angle += 3
         elif action == 3:  # Turn Right
@@ -147,10 +147,13 @@ class CarRacingGame:
         
         # 1. Distance-based reward
         new_distance = np.linalg.norm(np.array(self.checkpoints[self.current_checkpoint]) - np.array(self.car_pos))
+
         if new_distance < prev_distance:
-            reward += 1
+            speed_bonus = min(self.car_speed, 5) * 0.1
+            reward += 1 + speed_bonus
         else :
-            reward -= 1
+            speed_malus = min(self.car_speed, 5) * 0.1
+            reward -= 1 + speed_malus
 
         # 2. Checkpoint rewards
         if checkpoint_rect.collidepoint(self.car_pos):
@@ -249,7 +252,7 @@ class CarRacingGame:
         reward_text = font.render(f'Reward: {self.current_reward:.2f}', True, self.BLACK)
         self.screen.blit(speed_text, (10, 10))
         self.screen.blit(lap_text, (10, 50))
-        self.screen.blit(reward_text, (10, 90))
+        self.screen.blit(reward_text, (100, 10))
         
         pygame.display.flip()
         self.clock.tick(fps)
