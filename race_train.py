@@ -1,6 +1,6 @@
 ### Training Script (race_train.py) ###
 from race_game import CarRacingGame
-from race_agent import DQNAgent
+from race_agent import CarAgent
 import numpy as np
 import matplotlib.pyplot as plt
 import torch
@@ -15,7 +15,11 @@ LOAD_MODEL = False
 
 # Initialize environment and agent
 env = CarRacingGame()
-agent = DQNAgent(state_size=STATE_SIZE, action_size=ACTION_SIZE)
+agent = CarAgent(
+    state_size=STATE_SIZE,
+    action_size=ACTION_SIZE,
+    device=torch.device("cuda" if torch.cuda.is_available() else "cpu")
+)
 
 # Tracking variables
 scores = []
@@ -65,10 +69,10 @@ for episode in range(EPISODES):
 
     if episode % 100 == 0:
         print(f"Saving model at episode {episode}")
-        torch.save(agent.model.state_dict(), f'models/model_{episode}.pth')
+        agent.save_model(f"models/model_{episode}.pth")
 
 # save model
-torch.save(agent.model.state_dict(), 'models/model.pth')
+agent.save_model(f"models/model.pth")
 
 # Plotting results
 plt.figure(figsize=(10, 5))
