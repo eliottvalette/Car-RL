@@ -166,9 +166,6 @@ class CarAgent:
         nn.utils.clip_grad_norm_(self.network.parameters(), self.max_grad_norm)
         self.optimizer.step()
         
-        # Decay epsilon
-        self.epsilon = max(self.epsilon_min, self.epsilon * self.epsilon_decay)
-        
         self.training_step += 1
         
         return total_loss.item()

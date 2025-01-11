@@ -43,36 +43,36 @@ for episode in range(EPISODES):
         action = agent.act(state)
         next_state, reward, done, _ = env.step(action)
         agent.remember(state, action, reward, next_state, done)
-        agent.replay()
+        loss = agent.replay()
         state = next_state
         total_reward += reward
         step_count += 1
 
         if episode%10 == 0:
-            env.render(fps = 1000)  # Optional, for visualization
-
-    agent.decay_epsilon()
+            env.render(fps = 1000)
 
     scores.append(total_reward)
     epsilons.append(agent.epsilon)
 
+    print("-" * 40)
     print(f"Episode: {episode + 1}/{EPISODES}")
     print(f"Steps: {step_count}")
     print(f"Laps: {env.laps}")
     print(f"Total Reward: {total_reward:.2f}")
     print(f"Epsilon: {agent.epsilon:.2f}")
-    print("-" * 40)
+    if loss is not None:
+        print(f"Loss: {loss:.4f}")
 
-    # Update target network every 10 episodes
-    if episode % 10 == 0:
-        agent.update_target_model()
+    # Decay epsilon
+    agent.epsilon = max(agent.epsilon_min, agent.epsilon * agent.epsilon_decay)
 
+    # Save model periodically
     if episode % 100 == 0:
         print(f"Saving model at episode {episode}")
-        agent.save_model(f"models/model_{episode}.pth")
+        agent.save(f"models/model_{episode}.pth")
 
 # save model
-agent.save_model(f"models/model.pth")
+agent.save("models/model.pth")
 
 # Plotting results
 plt.figure(figsize=(10, 5))
