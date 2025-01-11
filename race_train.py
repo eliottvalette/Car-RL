@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 
 # Hyperparameters
 EPISODES = 1000
-STATE_SIZE = 11
+STATE_SIZE = 12  # Updated from 11 to 12 to include relative angle
 ACTION_SIZE = 4
 
 # Initialize environment and agent

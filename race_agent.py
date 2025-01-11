@@ -5,18 +5,19 @@ import torch.optim as optim
 import numpy as np
 from collections import deque
 import random
+import torch.nn.functional as F
 
 class DQNAgent:
-    def __init__(self, state_size, action_size, gamma=0.99, learning_rate=0.001, batch_size=64, memory_size=10000):
+    def __init__(self, state_size, action_size, gamma=0.99, learning_rate=0.0005, batch_size=128, memory_size=20000):
         self.state_size = state_size
         self.action_size = action_size
         self.gamma = gamma
         self.learning_rate = learning_rate
         self.batch_size = batch_size
         self.memory = deque(maxlen=memory_size)
-        self.epsilon = 0.5
+        self.epsilon = 1.0  
         self.epsilon_min = 0.01
-        self.epsilon_decay = 0.998
+        self.epsilon_decay = 0.992
 
         self.device = torch.device("cuda" if torch.cuda.is_available() else "mps" if torch.backends.mps.is_available() else "cpu")
         self.device = "cpu"
@@ -30,15 +31,77 @@ class DQNAgent:
         self.loss_fn = nn.MSELoss()
 
     def _build_model(self):
-        return nn.Sequential(
-            nn.Linear(self.state_size, 128),
-            nn.ReLU(),
-            nn.Linear(128, 128),
-            nn.ReLU(),
-            nn.Linear(128, 128),
-            nn.ReLU(),
-            nn.Linear(128, self.action_size)
-        )
+        class ResidualBlock(nn.Module):
+            def __init__(self, channels):
+                super().__init__()
+                self.layers = nn.Sequential(
+                    nn.Linear(channels, channels),
+                    nn.LayerNorm(channels),
+                    nn.ReLU(),
+                    nn.Dropout(0.1),
+                    nn.Linear(channels, channels),
+                    nn.LayerNorm(channels)
+                )
+            
+            def forward(self, x):
+                return F.relu(x + self.layers(x))
+
+        class DQNetwork(nn.Module):
+            def __init__(self, state_size, action_size):
+                super().__init__()
+                
+                self.input_norm = nn.LayerNorm(state_size)
+                
+                self.feature_extractor = nn.Sequential(
+                    nn.Linear(state_size, 256),
+                    nn.LayerNorm(256),
+                    nn.ReLU(),
+                    nn.Dropout(0.1)
+                )
+                
+                self.residual_blocks = nn.ModuleList([
+                    ResidualBlock(256) for _ in range(3)
+                ])
+                
+                self.advantage_stream = nn.Sequential(
+                    nn.Linear(256, 128),
+                    nn.LayerNorm(128),
+                    nn.ReLU(),
+                    nn.Dropout(0.1),
+                    nn.Linear(128, action_size)
+                )
+                
+                self.value_stream = nn.Sequential(
+                    nn.Linear(256, 128),
+                    nn.LayerNorm(128),
+                    nn.ReLU(),
+                    nn.Dropout(0.1),
+                    nn.Linear(128, 1)
+                )
+                
+            def forward(self, x):
+                x = self.input_norm(x)
+                x = self.feature_extractor(x)
+                
+                for residual in self.residual_blocks:
+                    x = residual(x)
+                
+                advantage = self.advantage_stream(x)
+                value = self.value_stream(x)
+                
+                # Combine value and advantage (Dueling DQN architecture)
+                q_values = value + (advantage - advantage.mean(dim=-1, keepdim=True))
+                return q_values
+
+        return DQNetwork(self.state_size, self.action_size)
+
+    # Add weight initialization method
+    def _initialize_weights(self):
+        for m in self.model.modules():
+            if isinstance(m, nn.Linear):
+                nn.init.kaiming_normal_(m.weight, mode='fan_in', nonlinearity='relu')
+                if m.bias is not None:
+                    nn.init.constant_(m.bias, 0)
 
     def update_target_model(self):
         self.target_model.load_state_dict(self.model.state_dict())

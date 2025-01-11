@@ -129,10 +129,7 @@ class CarRacingGame:
                     self.car_speed *= 0.6
                     break
 
-        if not collision:
-            self.car_pos = new_pos
-        else:
-            self.car_pos = new_pos  # Use the calculated position with wall push
+        self.car_pos = new_pos  # Use the calculated position with wall push
 
         # Check checkpoints with larger collision box
         checkpoint_rect = pygame.Rect(0, 0, 80, 80)  # Increased from 20x20 to 40x40
@@ -150,33 +147,23 @@ class CarRacingGame:
         
         # 1. Distance-based reward
         new_distance = np.linalg.norm(np.array(self.checkpoints[self.current_checkpoint]) - np.array(self.car_pos))
-        distance_reward = (prev_distance - new_distance) * 2
-        reward += distance_reward
+        if new_distance < prev_distance:
+            reward += 1
+        else :
+            reward -= 1
 
-        # 2. Speed and direction rewards
-        # Calculate dot product between car direction and checkpoint direction
-        car_direction = np.array([math.cos(math.radians(self.car_angle)), 
-                                math.sin(math.radians(self.car_angle))])
-        checkpoint_direction = np.array(self.checkpoints[self.current_checkpoint]) - np.array(self.car_pos)
-        checkpoint_direction = checkpoint_direction / np.linalg.norm(checkpoint_direction)
-        alignment = np.dot(car_direction, checkpoint_direction)
-        
-        # Reward for good alignment and speed
-        speed_reward = self.car_speed * alignment * 0.5
-        reward += speed_reward
-
-        # 3. Checkpoint rewards
+        # 2. Checkpoint rewards
         if checkpoint_rect.collidepoint(self.car_pos):
             base_checkpoint_reward = 150
             # Additional reward for maintaining speed through checkpoint
             speed_bonus = min(self.car_speed, 5) * 2
             reward += base_checkpoint_reward + speed_bonus
 
-        # 4. Lap completion reward
+        # 3. Lap completion reward
         if self.current_checkpoint == 0 and checkpoint_rect.collidepoint(self.car_pos):
             reward += 50 * (self.laps + 1)  # Increasing reward for each lap
 
-        # 5. Penalties
+        # 4. Penalties
         # Collision penalty
         if collision:
             reward -= 5  # Smaller penalty for hitting walls
@@ -185,26 +172,48 @@ class CarRacingGame:
         if self.car_speed < 0:
             reward -= abs(self.car_speed) * 2
 
-        # Excessive turning penalty
-        if action in [2, 3]:  # Turn actions
-            reward -= 0.1
-
-        # Add step penalty to encourage faster completion
-        reward -= 0.01 * self.steps
-
         # After calculating final reward, store it
-        self.current_reward = reward
+        self.current_reward += reward
         
         return self.get_state(), reward, self.done, {}
 
     def get_state(self):
         car_pos = np.array(self.car_pos) / np.array([self.WIDTH, self.HEIGHT])
-        car_speed = np.array([self.car_speed * math.cos(math.radians(self.car_angle)), self.car_speed * math.sin(math.radians(self.car_angle))])
-        car_angle = np.array([math.cos(math.radians(self.car_angle)), math.sin(math.radians(self.car_angle))])
+        car_speed = np.array([self.car_speed * math.cos(math.radians(self.car_angle)), 
+                             self.car_speed * math.sin(math.radians(self.car_angle))])
+        car_angle = np.array([math.cos(math.radians(self.car_angle)), 
+                             math.sin(math.radians(self.car_angle))])
         checkpoint = np.array(self.checkpoints[self.current_checkpoint]) / np.array([self.WIDTH, self.HEIGHT])
         checkpoint_direction = checkpoint - car_pos 
         checkpoint_distance = [np.linalg.norm(checkpoint_direction)]
-        concate_all_state = np.concatenate([car_pos, car_speed, car_angle, checkpoint, checkpoint_direction, checkpoint_distance])
+
+        # Properly calculate the relative angle between car's front and checkpoint
+        # 1. Get car's forward direction vector (already normalized)
+        car_direction = np.array([math.cos(math.radians(self.car_angle)), 
+                                -math.sin(math.radians(self.car_angle))])
+        
+        # 2. Get direction to checkpoint (normalize it)
+        to_checkpoint = checkpoint - car_pos
+        to_checkpoint = to_checkpoint / np.linalg.norm(to_checkpoint)
+        
+        # 3. Calculate angle using dot product and cross product
+        dot_product = np.dot(car_direction, to_checkpoint)
+        # Clamp dot product to [-1, 1] to avoid numerical errors
+        dot_product = np.clip(dot_product, -1.0, 1.0)
+        
+        # Use cross product to determine direction (right or left)
+        cross_product = np.cross(car_direction, to_checkpoint)
+        
+        # Calculate angle and normalize to [-1, 1]
+        angle = math.acos(dot_product)
+        if cross_product < 0:
+            angle = -angle
+        normalized_relative_angle = angle / math.pi
+
+        # Concatenate all state components
+        concate_all_state = np.concatenate([car_pos, car_speed, car_angle, checkpoint, 
+                                          to_checkpoint, checkpoint_distance, 
+                                          [normalized_relative_angle]])
         return concate_all_state
 
     def render(self, fps=60):
@@ -279,6 +288,7 @@ class CarRacingGame:
                 print("Checkpoint Position:", state[6:8])
                 print("Checkpoint Direction:", state[8:10])
                 print("Checkpoint Distance:", state[10])
+                print("Relative Angle:", state[11])
                 
             
             # Clear screen and draw game elements
