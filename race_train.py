@@ -1,13 +1,17 @@
-### Training Script (train.py) ###
+### Training Script (race_train.py) ###
 from race_game import CarRacingGame
 from race_agent import DQNAgent
 import numpy as np
 import matplotlib.pyplot as plt
+import torch
 
 # Hyperparameters
 EPISODES = 1000
-STATE_SIZE = 12  # Updated from 11 to 12 to include relative angle
+STATE_SIZE = 16  
 ACTION_SIZE = 4
+
+# Constants
+LOAD_MODEL = False
 
 # Initialize environment and agent
 env = CarRacingGame()
@@ -16,6 +20,14 @@ agent = DQNAgent(state_size=STATE_SIZE, action_size=ACTION_SIZE)
 # Tracking variables
 scores = []
 epsilons = []
+
+# Reproducibility
+np.random.seed(42)
+torch.manual_seed(42)
+
+# Load model if specified
+if LOAD_MODEL:
+    agent.model.load_state_dict(torch.load('models/model.pth'))
 
 for episode in range(EPISODES):
     state = env.reset()
@@ -32,7 +44,7 @@ for episode in range(EPISODES):
         total_reward += reward
         step_count += 1
 
-        if episode%1 == 0:
+        if episode%10 == 0:
             env.render(fps = 1000)  # Optional, for visualization
 
     agent.decay_epsilon()
@@ -50,6 +62,13 @@ for episode in range(EPISODES):
     # Update target network every 10 episodes
     if episode % 10 == 0:
         agent.update_target_model()
+
+    if episode % 100 == 0:
+        print(f"Saving model at episode {episode}")
+        torch.save(agent.model.state_dict(), f'models/model_{episode}.pth')
+
+# save model
+torch.save(agent.model.state_dict(), 'models/model.pth')
 
 # Plotting results
 plt.figure(figsize=(10, 5))

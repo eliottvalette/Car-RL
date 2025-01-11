@@ -6,6 +6,23 @@ import numpy as np
 from collections import deque
 import random
 
+class DQN_Model(nn.Module):
+    def __init__(self, state_size, action_size):
+        super(DQN_Model, self).__init__()
+        self.fc1 = nn.Linear(state_size, 128)
+        self.fc2 = nn.Linear(128, 256)
+        self.fc3 = nn.Linear(256, 256)
+        self.fc4 = nn.Linear(256, 128)
+        self.fc5 = nn.Linear(128, action_size)
+
+    def forward(self, x):
+        x = torch.relu(self.fc1(x))
+        x = torch.relu(self.fc2(x))
+        x = torch.relu(self.fc3(x))
+        x = torch.relu(self.fc4(x))
+        x = self.fc5(x)
+        return x
+
 class DQNAgent:
     def __init__(self, state_size, action_size, gamma=0.99, learning_rate=0.001, batch_size=64, memory_size=10000):
         self.state_size = state_size
@@ -22,25 +39,12 @@ class DQNAgent:
         self.device = "cpu"
 
         # Model and target model
-        self.model = self._build_model().to(self.device)
-        self.target_model = self._build_model().to(self.device)
+        self.model = DQN_Model(state_size, action_size).to(self.device)
+        self.target_model = DQN_Model(state_size, action_size).to(self.device)
         self.update_target_model()
 
         self.optimizer = optim.Adam(self.model.parameters(), lr=self.learning_rate)
         self.loss_fn = nn.MSELoss()
-
-    def _build_model(self):
-        return nn.Sequential(
-            nn.Linear(self.state_size, 128),
-            nn.LeakyReLU(),
-            nn.Linear(128, 256),
-            nn.LeakyReLU(),
-            nn.Linear(256, 256),
-            nn.LeakyReLU(),
-            nn.Linear(256, 128),
-            nn.LeakyReLU(),
-            nn.Linear(128, self.action_size)
-        )
 
     def update_target_model(self):
         self.target_model.load_state_dict(self.model.state_dict())
