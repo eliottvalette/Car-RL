@@ -4,6 +4,7 @@ import math
 import numpy as np
 import random as rd
 from config import Config
+import time
 
 config = Config()
 
@@ -21,24 +22,24 @@ class CarRacingGame:
         self.GREEN = (0, 255, 0)
         self.BLUE = (0, 0, 255)
 
+        # Track boundaries with wider road
+        self.outer_track = config.outer_track_complex
+        
+        self.inner_track = config.inner_track_complex
+
+        # Adjusted checkpoints to be centered in the track
+        self.checkpoints = config.checkpoints_complex
+
+        self.current_checkpoint = rd.randint(0, len(self.checkpoints) - 1)
+        self.laps = 0
+        self.done = False
+
         # Car properties
         self.car_img = pygame.Surface((40, 20), pygame.SRCALPHA)
         pygame.draw.polygon(self.car_img, self.RED, [(0, 10), (40, 0), (40, 20)])
-        self.car_pos = [100, 450]
-        self.car_angle = 90
+        self.car_pos = config.complex_spawns[self.current_checkpoint]
+        self.car_angle = config.complex_rotations[self.current_checkpoint]
         self.car_speed = 0
-
-        # Track boundaries with wider road
-        self.outer_track = config.outer_track_simple
-        
-        self.inner_track = config.inner_track_simple
-
-        # Adjusted checkpoints to be centered in the track
-        self.checkpoints = config.checkpoints_simple
-
-        self.current_checkpoint = 0
-        self.laps = 0
-        self.done = False
 
         # Rendering
         self.clock = pygame.time.Clock()
@@ -53,10 +54,10 @@ class CarRacingGame:
         self.sensor_angles = [i * (360 / self.num_sensors) for i in range(self.num_sensors)]
 
     def reset(self):
-        self.car_pos = [100, 450]
-        self.car_angle = 90
+        self.current_checkpoint = rd.randint(0, len(self.checkpoints) - 1)
+        self.car_pos = config.complex_spawns[self.current_checkpoint]
+        self.car_angle = config.complex_rotations[self.current_checkpoint]
         self.car_speed = 0
-        self.current_checkpoint = 0
         self.laps = 0
         self.done = False
         self.steps = 0        
@@ -71,11 +72,17 @@ class CarRacingGame:
         if action == 0:  # Accelerate
             self.car_speed = min(self.car_speed + 0.1, 3)
         elif action == 1:  # Decelerate
-            self.car_speed = max(self.car_speed - 0.1, -0.5)
+            self.car_speed = max(self.car_speed - 0.1, 0)
         elif action == 2:  # Turn Left
             self.car_angle += 3
+            # Reduce speed when turning based on current speed
+            turn_penalty = 0.05 * self.car_speed
+            self.car_speed = max(self.car_speed - turn_penalty, 0.5)
         elif action == 3:  # Turn Right
             self.car_angle -= 3
+            # Reduce speed when turning based on current speed
+            turn_penalty = 0.15 * self.car_speed
+            self.car_speed = max(self.car_speed - turn_penalty, 0.5)
 
         # Update car position with boundary constraints
         new_pos = [
@@ -145,17 +152,17 @@ class CarRacingGame:
         new_distance = np.linalg.norm(np.array(self.checkpoints[self.current_checkpoint]) - np.array(self.car_pos))
 
         if new_distance < prev_distance:
-            speed_bonus = min(self.car_speed, 5) * 0.4
+            speed_bonus = max(self.car_speed, 0) * 0.4
             reward += speed_bonus
         else :
-            speed_malus = min(self.car_speed, 5) * 0.4
+            speed_malus = max(self.car_speed, 0) * 0.4
             reward -= speed_malus
 
         # 2. Checkpoint rewards
         if checkpoint_rect.collidepoint(self.car_pos):
             base_checkpoint_reward = 150
             # Additional reward for maintaining speed through checkpoint
-            speed_bonus = min(self.car_speed, 5) * 2
+            speed_bonus = max(self.car_speed, 0) * 2
             reward += base_checkpoint_reward + speed_bonus
 
         # 3. Lap completion reward
@@ -165,7 +172,7 @@ class CarRacingGame:
         # 4. Penalties
         # Collision penalty
         if collision:
-            reward -= 40  # Smaller penalty for hitting walls
+            reward -= 4  # Smaller penalty for hitting walls
 
         # After calculating final reward, store it
         self.current_reward += reward
@@ -301,8 +308,8 @@ class CarRacingGame:
         lap_text = font.render(f'Laps: {self.laps}', True, self.BLACK)
         reward_text = font.render(f'Reward: {self.current_reward:.2f}', True, self.BLACK)
         self.screen.blit(speed_text, (10, 10))
-        self.screen.blit(lap_text, (10, 50))
-        self.screen.blit(reward_text, (200, 10))
+        self.screen.blit(lap_text, (200, 10))
+        self.screen.blit(reward_text, (390, 10))
 
         # Draw sensor lines and intersection points
         for angle, distance in zip(self.sensor_angles, self.get_wall_distances()):
@@ -339,6 +346,10 @@ class CarRacingGame:
                 self.step(2)
             elif keys[pygame.K_RIGHT]:
                 self.step(3)
+
+            if keys[pygame.K_r]:
+                self.reset()
+                time.sleep(0.5)
 
             if keys[pygame.K_ESCAPE]:
                 print("Decomposed State")
