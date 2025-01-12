@@ -3,6 +3,9 @@ import pygame
 import math
 import numpy as np
 import random as rd
+from config import Config
+
+config = Config()
 
 class CarRacingGame:
     def __init__(self):
@@ -26,76 +29,12 @@ class CarRacingGame:
         self.car_speed = 0
 
         # Track boundaries with wider road
-        self.outer_track = [
-            # Top-Left Corner (1)
-            (50, 50),
-
-            # ZigZag part 2 -> 8
-            (200, 50),
-            (300, 150),
-            (400, 50),
-            (500, 150),
-            (600, 50),
-            (700, 150),
-            (800, 50),
-
-            # Top-Right Corner (9)
-            (950, 50),
-
-            # Bottom-Right Corner (10)
-            (950, 750),
-
-            # Spiral part 11 -> 16
-            (500, 750),
-            (500, 500),
-            (700, 500),
-            (700, 400),
-            (400, 400),
-            (400, 750),
-
-            # Bottom-Left Corner (17)
-            (50, 750)
-            ]
-        self.inner_track = [
-            # Top-Left Corner (1)
-            (150, 150),
-
-            # ZigZag part 2 -> 8
-            (200, 150),
-            (300, 250),
-            (400, 150),
-            (500, 250),
-            (600, 150),
-            (700, 250),
-            (800, 150),
-
-            # Top-Right Corner (9)
-            (850, 150),
-
-            # Bottom-Right Corner (10)
-            (850, 650),
-
-            # Spiral part 11 -> 16
-            (600, 650),
-            (600, 600),
-            (800, 600),
-            (800, 300),
-            (300, 300),
-            (300, 650),
-
-            # Bottom-Left Corner (17)
-            (150, 650)
-
-        ]
+        self.outer_track = config.outer_track_simple
+        
+        self.inner_track = config.inner_track_simple
 
         # Adjusted checkpoints to be centered in the track
-        self.checkpoints = [
-            (125, 100),    
-            (875, 100),    
-            (875, 700), 
-            (550, 350),
-            (125, 700)     
-        ]
+        self.checkpoints = config.checkpoints_simple
 
         self.current_checkpoint = 0
         self.laps = 0
