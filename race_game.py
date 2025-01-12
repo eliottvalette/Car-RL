@@ -21,7 +21,7 @@ class CarRacingGame:
         # Car properties
         self.car_img = pygame.Surface((40, 20), pygame.SRCALPHA)
         pygame.draw.polygon(self.car_img, self.RED, [(0, 10), (40, 0), (40, 20)])
-        self.car_pos = [100, 100]
+        self.car_pos = [100, 450]
         self.car_angle = 90
         self.car_speed = 0
 
@@ -90,11 +90,11 @@ class CarRacingGame:
 
         # Adjusted checkpoints to be centered in the track
         self.checkpoints = [
-            (125, 100),    # Start/Finish line at top-left
-            (500, 100),    # Middle of top zigzag
-            (875, 100),    # End of zigzag at top-right
-            (800, 450),    # Middle of spiral section
-            (350, 700)     # Bottom section before returning to start
+            (125, 100),    
+            (875, 100),    
+            (875, 700), 
+            (550, 350),
+            (125, 700)     
         ]
 
         self.current_checkpoint = 0
@@ -114,7 +114,7 @@ class CarRacingGame:
         self.sensor_angles = [i * (360 / self.num_sensors) for i in range(self.num_sensors)]
 
     def reset(self):
-        self.car_pos = [184, 363]
+        self.car_pos = [100, 450]
         self.car_angle = 90
         self.car_speed = 0
         self.current_checkpoint = 0
@@ -132,7 +132,7 @@ class CarRacingGame:
         if action == 0:  # Accelerate
             self.car_speed = min(self.car_speed + 0.1, 3)
         elif action == 1:  # Decelerate
-            self.car_speed = max(self.car_speed - 0.1, 0)
+            self.car_speed = max(self.car_speed - 0.1, -0.5)
         elif action == 2:  # Turn Left
             self.car_angle += 3
         elif action == 3:  # Turn Right

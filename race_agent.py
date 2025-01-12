@@ -77,7 +77,7 @@ class CarAgent:
         self.batch_size = 128
         
         # Exploration parameters
-        self.epsilon = 0.01
+        self.epsilon = 0.4
         self.epsilon_min = 0.001
         self.epsilon_decay = 0.992
         
@@ -181,7 +181,6 @@ class CarAgent:
         torch.save({
             'network_state_dict': self.network.state_dict(),
             'optimizer_state_dict': self.optimizer.state_dict(),
-            'epsilon': self.epsilon,
             'training_step': self.training_step,
         }, path)
         
@@ -189,5 +188,4 @@ class CarAgent:
         checkpoint = torch.load(path)
         self.network.load_state_dict(checkpoint['network_state_dict'])
         self.optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
-        self.epsilon = checkpoint['epsilon']
         self.training_step = checkpoint['training_step']
