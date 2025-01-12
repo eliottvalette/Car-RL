@@ -7,11 +7,11 @@ import torch
 
 # Hyperparameters
 EPISODES = 1000
-STATE_SIZE = 16  
+STATE_SIZE = 17 
 ACTION_SIZE = 4
 
 # Constants
-LOAD_MODEL = False
+LOAD_MODEL = True
 
 # Initialize environment and agent
 env = CarRacingGame()

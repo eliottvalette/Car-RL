@@ -7,7 +7,7 @@ import random as rd
 class CarRacingGame:
     def __init__(self):
         pygame.init()
-        self.WIDTH, self.HEIGHT = 800, 600
+        self.WIDTH, self.HEIGHT = 1000, 800
         self.screen = pygame.display.set_mode((self.WIDTH, self.HEIGHT))
         pygame.display.set_caption("Car Racing RL Environment")
 
@@ -21,25 +21,47 @@ class CarRacingGame:
         # Car properties
         self.car_img = pygame.Surface((40, 20), pygame.SRCALPHA)
         pygame.draw.polygon(self.car_img, self.RED, [(0, 10), (40, 0), (40, 20)])
-        self.car_pos = [150, 150]
+        self.car_pos = [80, 150]
         self.car_angle = 0
         self.car_speed = 0
 
-        # Track
-        self.track = [
-            (100, 100),
-            (700, 100),
-            (700, 500),
-            (100, 500)
+        # Track boundaries with wider road
+        self.outer_track = [
+            (25, 150),    # Widened outward
+            (150, 25),    # Widened outward
+            (375, 25),    # Widened outward
+            (425, 150),
+            (375, 275),
+            (425, 325),
+            (475, 475),   # Widened outward
+            (375, 625),   # Widened outward
+            (200, 675),   # Widened outward
+            (25, 675),    # Widened outward
+            (75, 575),
+            (125, 525),
+            (25, 375)
+        ]
+        
+        self.inner_track = [
+            (175, 175),   # Moved inward
+            (325, 175),   # Moved inward
+            (275, 275),
+            (275, 425),
+            (325, 525),
+            (175, 575),   # Moved inward
+            (225, 450),
+            (175, 375)
         ]
 
-        # Checkpoints
+        # Adjusted checkpoints to be centered in the track
         self.checkpoints = [
-            (400, 100),
-            (700, 300),
-            (400, 500),
-            (100, 300)
+            (150, 135),   # Start straight
+            (365, 155),   # Top right corner
+            (355, 565),   # Right side
+            (135, 575),    # Bottom left
+            (100, 375)    # Left side
         ]
+
         self.current_checkpoint = 0
         self.laps = 0
         self.done = False
@@ -52,7 +74,7 @@ class CarRacingGame:
         self.current_reward = 0  
 
     def reset(self):
-        self.car_pos = [150, 150]
+        self.car_pos = [80, 150]
         self.car_angle = 0
         self.car_speed = 0
         self.current_checkpoint = 0
@@ -68,7 +90,7 @@ class CarRacingGame:
         prev_pos = self.car_pos.copy()  # Store previous position
         
         if action == 0:  # Accelerate
-            self.car_speed = min(self.car_speed + 0.1, 5)
+            self.car_speed = min(self.car_speed + 0.1, 3)
         elif action == 1:  # Decelerate
             self.car_speed = max(self.car_speed - 0.1, 0)
         elif action == 2:  # Turn Left
@@ -82,53 +104,49 @@ class CarRacingGame:
             self.car_pos[1] - self.car_speed * math.sin(math.radians(self.car_angle))
         ]
 
-        # Check collision with track boundaries
+        # Check collision with both track boundaries
         collision = False
         car_rect = pygame.Rect(0, 0, 30, 15)
         car_rect.center = (new_pos[0], new_pos[1])
         
         buffer = 5
-        for i in range(len(self.track)):
-            start = self.track[i]
-            end = self.track[(i + 1) % len(self.track)]
-            
-            if car_rect.clipline(
-                (start[0] - buffer, start[1] - buffer),
-                (end[0] + buffer, end[1] + buffer)
-            ):
-                if car_rect.clipline(start, end):
-                    collision = True
-                    # Calculate wall direction vector
-                    wall_dx = end[0] - start[0]
-                    wall_dy = end[1] - start[1]
-                    wall_len = math.sqrt(wall_dx**2 + wall_dy**2)
-                    wall_dx /= wall_len
-                    wall_dy /= wall_len
+        # Check both tracks with different behaviors
+        for track_idx, track in enumerate([self.outer_track, self.inner_track]):
+            for i in range(len(track)):
+                start = track[i]
+                end = track[(i + 1) % len(track)]
+                
+                if car_rect.clipline(
+                    (start[0] - buffer, start[1] - buffer),
+                    (end[0] + buffer, end[1] + buffer)
+                ):
+                    if car_rect.clipline(start, end):
+                        collision = True
+                        # Calculate wall direction vector
+                        wall_dx = end[0] - start[0]
+                        wall_dy = end[1] - start[1]
+                        wall_len = math.sqrt(wall_dx**2 + wall_dy**2)
+                        wall_dx /= wall_len
+                        wall_dy /= wall_len
 
-                    # Calculate wall normal (perpendicular to wall)
-                    wall_normal_x = -wall_dy
-                    wall_normal_y = wall_dx
+                        # Calculate wall normal (perpendicular to wall)
+                        # For outer track (idx=0): push inward
+                        # For inner track (idx=1): push outward
+                        if track_idx == 0:  # Outer track
+                            wall_normal_x = -wall_dy
+                            wall_normal_y = wall_dx
+                        else:  # Inner track
+                            wall_normal_x = wall_dy
+                            wall_normal_y = -wall_dx
 
-                    # Push the car away from the wall
-                    push_distance = 1  # Adjust this value to control how far to push
-                    new_pos[0] += wall_normal_x * push_distance
-                    new_pos[1] += wall_normal_y * push_distance
+                        # Stronger push when hitting walls
+                        push_distance = 2  # Increased from 1 to 2
+                        new_pos[0] += wall_normal_x * push_distance
+                        new_pos[1] += wall_normal_y * push_distance
 
-                    # Calculate movement vector
-                    move_dx = math.cos(math.radians(self.car_angle))
-                    move_dy = -math.sin(math.radians(self.car_angle))
-
-                    # Calculate dot product to find parallel component
-                    dot = move_dx * wall_dx + move_dy * wall_dy
-                    
-                    # Apply sliding movement with reduced effect
-                    slide_factor = 0.5  # Reduced from 0.8
-                    new_pos[0] += wall_dx * dot * self.car_speed * slide_factor
-                    new_pos[1] += wall_dy * dot * self.car_speed * slide_factor
-                    
-                    # Reduce speed more significantly
-                    self.car_speed *= 0.6
-                    break
+                        # More speed reduction on collision
+                        self.car_speed *= 0.5  # Increased speed reduction from 0.6 to 0.5
+                        break
 
         self.car_pos = new_pos  # Use the calculated position with wall push
 
@@ -187,7 +205,7 @@ class CarRacingGame:
         checkpoint = np.array(self.checkpoints[self.current_checkpoint]) / np.array([self.WIDTH, self.HEIGHT])
         checkpoint_direction = checkpoint - car_pos 
         checkpoint_distance = [np.linalg.norm(checkpoint_direction)]
-        checkpoint_one_hot = np.zeros(4)
+        checkpoint_one_hot = np.zeros(len(self.checkpoints))
         checkpoint_one_hot[self.current_checkpoint] = 1
 
         # Properly calculate the relative angle between car's front and checkpoint
@@ -221,8 +239,15 @@ class CarRacingGame:
     def render(self, fps=60):
         self.screen.fill(self.WHITE)
 
-        # Draw the track
-        pygame.draw.lines(self.screen, self.BLACK, True, self.track, 2)
+        # Draw both track boundaries
+        pygame.draw.lines(self.screen, self.BLACK, True, self.outer_track, 2)
+        pygame.draw.lines(self.screen, self.BLACK, True, self.inner_track, 2)
+
+        # Fill track area
+        track_surface = pygame.Surface((self.WIDTH, self.HEIGHT), pygame.SRCALPHA)
+        pygame.draw.polygon(track_surface, (200, 200, 200, 128), self.outer_track)
+        pygame.draw.polygon(track_surface, (255, 255, 255, 255), self.inner_track)
+        self.screen.blit(track_surface, (0, 0))
 
         # Draw checkpoints with visible collision boxes
         for i, cp in enumerate(self.checkpoints):
@@ -256,9 +281,6 @@ class CarRacingGame:
 
     def manual_control(self):
         running = True
-        clock = pygame.time.Clock()
-        font = pygame.font.Font(None, 36)
-        
         while running:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
@@ -286,33 +308,9 @@ class CarRacingGame:
                 print("Checkpoint Direction:", state[8:10])
                 print("Checkpoint Distance:", state[10])
                 print("Relative Angle:", state[11])
-                
-            
-            # Clear screen and draw game elements
-            self.screen.fill(self.WHITE)
-            
-            # Draw track and checkpoints
-            pygame.draw.lines(self.screen, self.BLACK, True, self.track, 2)
-            for i, cp in enumerate(self.checkpoints):
-                color = self.GREEN if i == self.current_checkpoint else self.BLUE
-                pygame.draw.circle(self.screen, color, cp, 10)
-            
-            # Draw car
-            rotated_car = pygame.transform.rotate(self.car_img, self.car_angle)
-            car_rect = rotated_car.get_rect(center=self.car_pos)
-            self.screen.blit(rotated_car, car_rect)
-            
-            # Draw UI text
-            speed_text = font.render(f'Speed: {self.car_speed:.1f}', True, self.BLACK)
-            lap_text = font.render(f'Laps: {self.laps}', True, self.BLACK)
-            reward_text = font.render(f'Reward: {self.current_reward:.2f}', True, self.BLACK)
-            self.screen.blit(speed_text, (10, 10))
-            self.screen.blit(lap_text, (10, 50))
-            self.screen.blit(reward_text, (10, 90))
-            
-            # Single display update
-            pygame.display.flip()
-            clock.tick(60)
+
+            # Use the render method instead of duplicating rendering code
+            self.render(60)
 
 if __name__ == "__main__":
     game = CarRacingGame()
