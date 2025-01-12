@@ -27,39 +27,39 @@ class CarRacingGame:
 
         # Track boundaries with wider road
         self.outer_track = [
-            (25, 150),    # Widened outward
-            (150, 25),    # Widened outward
-            (375, 25),    # Widened outward
+            (25 , 150),    
+            (150, 25 ),    
+            (375, 25 ),    
             (425, 150),
             (375, 275),
             (425, 325),
-            (475, 475),   # Widened outward
-            (375, 625),   # Widened outward
-            (200, 675),   # Widened outward
-            (25, 675),    # Widened outward
-            (75, 575),
+            (475, 475),   
+            (375, 625),   
+            (200, 675),   
+            (25 , 675),    
+            (75 , 575),
             (125, 525),
-            (25, 375)
+            (25 , 375)
         ]
         
         self.inner_track = [
-            (175, 175),   # Moved inward
-            (325, 175),   # Moved inward
+            (175, 175),   
+            (325, 175),   
             (275, 275),
             (275, 425),
             (325, 525),
-            (175, 575),   # Moved inward
+            (175, 575),   
             (225, 450),
             (175, 375)
         ]
 
         # Adjusted checkpoints to be centered in the track
         self.checkpoints = [
-            (150, 135),   # Start straight
-            (365, 155),   # Top right corner
-            (355, 565),   # Right side
-            (135, 575),    # Bottom left
-            (100, 375)    # Left side
+            (150, 135),  
+            (365, 155),  
+            (355, 565),  
+            (135, 575),  
+            (100, 375)   
         ]
 
         self.current_checkpoint = 0
@@ -73,9 +73,10 @@ class CarRacingGame:
         self.steps = 0         
         self.current_reward = 0  
 
-        # Add detection box size
-        self.detection_box_width = 80  # Twice the car width
-        self.detection_box_height = 40 # Twice the car height
+        # Add sensor parameters
+        self.num_sensors = 8
+        self.sensor_range = 100 
+        self.sensor_angles = [i * (360 / self.num_sensors) for i in range(self.num_sensors)]
 
     def reset(self):
         self.car_pos = [80, 150]
@@ -199,7 +200,56 @@ class CarRacingGame:
         
         return self.get_state(), reward, self.done, {}
     
+    def get_wall_distances(self):
+        """Calculate distances to walls in 8 directions around the car"""
+        distances = []
+        
+        for angle in self.sensor_angles:
+            # Calculate sensor endpoint using car's position and angle
+            sensor_angle = math.radians(self.car_angle + angle)
+            end_x = self.car_pos[0] + math.cos(sensor_angle) * self.sensor_range
+            end_y = self.car_pos[1] - math.sin(sensor_angle) * self.sensor_range
+            
+            min_distance = self.sensor_range  # Default to max range
+            
+            # Check both tracks
+            for track in [self.outer_track, self.inner_track]:
+                for i in range(len(track)):
+                    start_wall = track[i]
+                    end_wall = track[(i + 1) % len(track)]
+                    
+                    # Line intersection calculation
+                    x1, y1 = self.car_pos
+                    x2, y2 = end_x, end_y
+                    x3, y3 = start_wall
+                    x4, y4 = end_wall
+                    
+                    denominator = (x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4)
+                    if denominator == 0:  # Lines are parallel
+                        continue
+                    
+                    t = ((x1 - x3) * (y3 - y4) - (y1 - y3) * (x3 - x4)) / denominator
+                    u = -((x1 - x2) * (y1 - y3) - (y1 - y2) * (x1 - x3)) / denominator
+                    
+                    if 0 <= t <= 1 and 0 <= u <= 1:  # Lines intersect
+                        # Calculate intersection point
+                        intersection_x = x1 + t * (x2 - x1)
+                        intersection_y = y1 + t * (y2 - y1)
+                        
+                        # Calculate distance to intersection
+                        distance = math.sqrt(
+                            (intersection_x - x1) ** 2 + 
+                            (intersection_y - y1) ** 2
+                        )
+                        min_distance = min(min_distance, distance)
+            
+            # Normalize distance to [0, 1]
+            distances.append(min_distance / self.sensor_range)
+            
+        return distances
+    
     def get_state(self):
+        # Get previous state components
         car_pos = np.array(self.car_pos) / np.array([self.WIDTH, self.HEIGHT])
         car_speed = np.array([self.car_speed * math.cos(math.radians(self.car_angle)), 
                              self.car_speed * math.sin(math.radians(self.car_angle))])
@@ -211,33 +261,39 @@ class CarRacingGame:
         checkpoint_distance = [np.linalg.norm(checkpoint_direction)]
         checkpoint_one_hot = np.zeros(len(self.checkpoints))
         checkpoint_one_hot[self.current_checkpoint] = 1
-
-        # Properly calculate the relative angle between car's front and checkpoint
-        # 1. Get car's forward direction vector (already normalized)
+        
+        # Calculate relative angle to checkpoint
         car_direction = np.array([math.cos(math.radians(self.car_angle)), 
                                 -math.sin(math.radians(self.car_angle))])
-        
-        # 2. Get direction to checkpoint (normalize it)
         to_checkpoint = checkpoint - car_pos
         to_checkpoint = to_checkpoint / np.linalg.norm(to_checkpoint)
         
-        # 3. Calculate angle using dot product and cross product
         dot_product = np.dot(car_direction, to_checkpoint)
         dot_product = np.clip(dot_product, -1.0, 1.0)
-        
-        # Use cross product to determine direction (right or left)
         cross_product = np.cross(car_direction, to_checkpoint)
         
-        # Calculate angle and normalize to [-1, 1]
         angle = math.acos(dot_product)
         if cross_product < 0:
             angle = -angle
         normalized_relative_angle = angle / math.pi
         
-        concate_all_state = np.concatenate([car_pos, car_speed, car_angle, checkpoint, 
-                                          to_checkpoint, checkpoint_distance, checkpoint_one_hot,
-                                          [normalized_relative_angle]])
-        return concate_all_state
+        # Get wall distances
+        wall_distances = np.array(self.get_wall_distances())
+        
+        # Concatenate all state components including wall distances
+        state = np.concatenate([
+            car_pos,                    # 2 values
+            car_speed,                  # 2 values
+            car_angle,                  # 2 values
+            checkpoint,                 # 2 values
+            to_checkpoint,              # 2 values
+            checkpoint_distance,        # 1 value
+            checkpoint_one_hot,         # 5 values
+            [normalized_relative_angle], # 1 value
+            wall_distances              # 8 values (new)
+        ])
+        
+        return state
 
     def render(self, fps=60):
         self.screen.fill(self.WHITE)
@@ -275,6 +331,17 @@ class CarRacingGame:
         self.screen.blit(speed_text, (10, 10))
         self.screen.blit(lap_text, (10, 50))
         self.screen.blit(reward_text, (200, 10))
+
+        # Draw sensor lines and intersection points
+        for angle, distance in zip(self.sensor_angles, self.get_wall_distances()):
+            sensor_angle = math.radians(self.car_angle + angle)
+            end_x = self.car_pos[0] + math.cos(sensor_angle) * (distance * self.sensor_range)
+            end_y = self.car_pos[1] - math.sin(sensor_angle) * (distance * self.sensor_range)
+            
+            # Draw sensor lines
+            pygame.draw.line(self.screen, (255, 0, 0), self.car_pos, (end_x, end_y), 1)
+            # Draw intersection points
+            pygame.draw.circle(self.screen, (0, 255, 0), (int(end_x), int(end_y)), 3)
         
         pygame.display.flip()
         self.clock.tick(fps)
