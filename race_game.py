@@ -21,44 +21,80 @@ class CarRacingGame:
         # Car properties
         self.car_img = pygame.Surface((40, 20), pygame.SRCALPHA)
         pygame.draw.polygon(self.car_img, self.RED, [(0, 10), (40, 0), (40, 20)])
-        self.car_pos = [184, 363]
+        self.car_pos = [100, 100]
         self.car_angle = 90
         self.car_speed = 0
 
         # Track boundaries with wider road
         self.outer_track = [
-            (214, 35), 
-            (35, 214), 
-            (35, 535), 
-            (214, 607), 
-            (392, 535), 
-            (464, 607), 
-            (678, 678), 
-            (892, 535), 
-            (964, 285), 
-            (964, 35), 
-            (821, 107), 
-            (750, 178), 
-            (535, 35)
+            # Top-Left Corner (1)
+            (50, 50),
+
+            # ZigZag part 2 -> 8
+            (200, 50),
+            (300, 150),
+            (400, 50),
+            (500, 150),
+            (600, 50),
+            (700, 150),
+            (800, 50),
+
+            # Top-Right Corner (9)
+            (950, 50),
+
+            # Bottom-Right Corner (10)
+            (950, 750),
+
+            # Spiral part 11 -> 16
+            (500, 750),
+            (500, 500),
+            (700, 500),
+            (700, 400),
+            (400, 400),
+            (400, 750),
+
+            # Bottom-Left Corner (17)
+            (50, 750)
             ]
         self.inner_track = [
-            (250, 250), 
-            (250, 464), 
-            (392, 392), 
-            (607, 392), 
-            (750, 464), 
-            (821, 250), 
-            (642, 321), 
-            (535, 250)
+            # Top-Left Corner (1)
+            (150, 150),
+
+            # ZigZag part 2 -> 8
+            (200, 150),
+            (300, 250),
+            (400, 150),
+            (500, 250),
+            (600, 150),
+            (700, 250),
+            (800, 150),
+
+            # Top-Right Corner (9)
+            (850, 150),
+
+            # Bottom-Right Corner (10)
+            (850, 650),
+
+            # Spiral part 11 -> 16
+            (600, 650),
+            (600, 600),
+            (800, 600),
+            (800, 300),
+            (300, 300),
+            (300, 650),
+
+            # Bottom-Left Corner (17)
+            (150, 650)
+
         ]
 
         # Adjusted checkpoints to be centered in the track
         self.checkpoints = [
-            (220, 235), 
-            (535, 190), 
-            (851, 225), 
-            (775, 507), 
-            (221, 481)
+            (125, 100),    # Start/Finish line at top-left
+            (500, 100),    # Middle of top zigzag
+            (875, 100),    # End of zigzag at top-right
+            (800, 450),    # Middle of spiral section
+            (350, 700)     # Bottom section before returning to start
         ]
 
         self.current_checkpoint = 0
@@ -134,7 +170,7 @@ class CarRacingGame:
                         wall_dy /= wall_len
 
                         # Calculate wall normal (perpendicular to wall)
-                        if track_idx == 1: 
+                        if track_idx == 0: 
                             wall_normal_x = -wall_dy
                             wall_normal_y = wall_dx
                         else: 
