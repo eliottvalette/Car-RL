@@ -11,7 +11,7 @@ STATE_SIZE = 25
 ACTION_SIZE = 4
 
 # Constants
-LOAD_MODEL = True
+LOAD_MODEL = False
 
 # Initialize environment and agent
 env = CarRacingGame()
