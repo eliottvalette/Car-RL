@@ -54,11 +54,11 @@ class CarRacingGame:
 
         # Adjusted checkpoints to be centered in the track
         self.checkpoints = [
-            (192, 214), 
-            (535, 142), 
-            (821, 192), 
-            (807, 507), 
-            (221, 521)
+            (220, 235), 
+            (535, 190), 
+            (851, 225), 
+            (775, 507), 
+            (221, 481)
         ]
 
         self.current_checkpoint = 0
