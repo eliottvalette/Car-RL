@@ -2,6 +2,7 @@
 import pygame
 import math
 import numpy as np
+import random as rd
 
 class CarRacingGame:
     def __init__(self):
@@ -67,7 +68,7 @@ class CarRacingGame:
         prev_pos = self.car_pos.copy()  # Store previous position
         
         if action == 0:  # Accelerate
-            self.car_speed = min(self.car_speed + 0.1, 2)
+            self.car_speed = min(self.car_speed + 0.1, 5)
         elif action == 1:  # Decelerate
             self.car_speed = max(self.car_speed - 0.1, 0)
         elif action == 2:  # Turn Left

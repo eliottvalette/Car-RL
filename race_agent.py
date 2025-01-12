@@ -70,9 +70,9 @@ class CarAgent:
         self.batch_size = 128
         
         # Exploration parameters
-        self.epsilon = 0.02
+        self.epsilon = 1
         self.epsilon_min = 0.001
-        self.epsilon_decay = 0.995
+        self.epsilon_decay = 0.99
         
         # Initialize network and optimizer
         self.network = ActorCriticNetwork(state_size, action_size).to(device)

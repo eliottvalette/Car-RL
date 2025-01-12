@@ -11,7 +11,7 @@ STATE_SIZE = 16
 ACTION_SIZE = 4
 
 # Constants
-LOAD_MODEL = True
+LOAD_MODEL = False
 
 # Initialize environment and agent
 env = CarRacingGame()
@@ -64,12 +64,12 @@ for episode in range(EPISODES):
         print(f"Loss: {loss:.4f}")
 
     # Decay epsilon
-    agent.epsilon = 0 # max(agent.epsilon_min, agent.epsilon * agent.epsilon_decay)
+    agent.epsilon = max(agent.epsilon_min, agent.epsilon * agent.epsilon_decay)
 
     # Save model periodically
-    if episode % 100 == 0:
-        print(f"Saving model at episode {episode}")
-        agent.save(f"models/model_{episode}.pth")
+    if (episode+1) % 10 == 0:
+        print(f"Saving model at episode {episode+1}")
+        agent.save(f"models/model_{episode+1}.pth")
 
 # save model
 agent.save("models/model.pth")
