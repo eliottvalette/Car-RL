@@ -38,14 +38,16 @@ new_track_in = []
 new_checkpoints = []
 
 for point in track_out:
-    new_track_out.append((int(point[1]/700 * 1000), int(point[0]/700 * 1000)))
+    new_track_out.append((int(point[1] / 700 * 1000), int(point[0] / 700 * 1000)))
 
 for point in track_in:
-    new_track_in.append((int(point[1]/700 * 1000), int(point[0]/700 * 1000)))
+    new_track_in.append((int(point[1] / 700 * 1000), int(point[0] / 700 * 1000)))
 
 for point in checkpoints:
-    new_checkpoints.append((int(point[1]/700 * 1000), int(point[0]/700 * 1000)))
+    new_checkpoints.append((int(point[1] / 700 * 1000), int(point[0] / 700 * 1000)))
 
 print(new_track_out)
 print(new_track_in)
 print(new_checkpoints)
+
+print(int(0.18426191  * 1000), int(0.45450386 * 800))

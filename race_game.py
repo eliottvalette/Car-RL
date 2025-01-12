@@ -21,16 +21,45 @@ class CarRacingGame:
         # Car properties
         self.car_img = pygame.Surface((40, 20), pygame.SRCALPHA)
         pygame.draw.polygon(self.car_img, self.RED, [(0, 10), (40, 0), (40, 20)])
-        self.car_pos = [80, 150]
-        self.car_angle = 0
+        self.car_pos = [184, 363]
+        self.car_angle = 90
         self.car_speed = 0
 
         # Track boundaries with wider road
-        self.outer_track = [(214, 35), (35, 214), (35, 535), (214, 607), (392, 535), (464, 607), (678, 678), (892, 535), (964, 285), (964, 35), (821, 107), (750, 178), (535, 35)]
-        self.inner_track = [(250, 250), (250, 464), (392, 392), (607, 392), (750, 464), (821, 250), (642, 321), (535, 250)]
+        self.outer_track = [
+            (214, 35), 
+            (35, 214), 
+            (35, 535), 
+            (214, 607), 
+            (392, 535), 
+            (464, 607), 
+            (678, 678), 
+            (892, 535), 
+            (964, 285), 
+            (964, 35), 
+            (821, 107), 
+            (750, 178), 
+            (535, 35)
+            ]
+        self.inner_track = [
+            (250, 250), 
+            (250, 464), 
+            (392, 392), 
+            (607, 392), 
+            (750, 464), 
+            (821, 250), 
+            (642, 321), 
+            (535, 250)
+        ]
 
         # Adjusted checkpoints to be centered in the track
-        self.checkpoints = [(192, 214), (221, 521), (807, 507), (821, 192), (535, 142)]
+        self.checkpoints = [
+            (192, 214), 
+            (535, 142), 
+            (821, 192), 
+            (807, 507), 
+            (221, 521)
+        ]
 
         self.current_checkpoint = 0
         self.laps = 0
@@ -41,7 +70,7 @@ class CarRacingGame:
 
         self.max_steps = 2_000  
         self.steps = 0         
-        self.current_reward = 0  
+        self.current_reward = 0 
 
         # Add sensor parameters
         self.num_sensors = 8
@@ -49,8 +78,8 @@ class CarRacingGame:
         self.sensor_angles = [i * (360 / self.num_sensors) for i in range(self.num_sensors)]
 
     def reset(self):
-        self.car_pos = [80, 150]
-        self.car_angle = 0
+        self.car_pos = [184, 363]
+        self.car_angle = 90
         self.car_speed = 0
         self.current_checkpoint = 0
         self.laps = 0
@@ -105,12 +134,10 @@ class CarRacingGame:
                         wall_dy /= wall_len
 
                         # Calculate wall normal (perpendicular to wall)
-                        # For outer track (idx=0): push inward
-                        # For inner track (idx=1): push outward
-                        if track_idx == 0:  # Outer track
+                        if track_idx == 1: 
                             wall_normal_x = -wall_dy
                             wall_normal_y = wall_dx
-                        else:  # Inner track
+                        else: 
                             wall_normal_x = wall_dy
                             wall_normal_y = -wall_dx
 
