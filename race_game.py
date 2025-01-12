@@ -26,41 +26,11 @@ class CarRacingGame:
         self.car_speed = 0
 
         # Track boundaries with wider road
-        self.outer_track = [
-            (25 , 150),    
-            (150, 25 ),    
-            (375, 25 ),    
-            (425, 150),
-            (375, 275),
-            (425, 325),
-            (475, 475),   
-            (375, 625),   
-            (200, 675),   
-            (25 , 675),    
-            (75 , 575),
-            (125, 525),
-            (25 , 375)
-        ]
-        
-        self.inner_track = [
-            (175, 175),   
-            (325, 175),   
-            (275, 275),
-            (275, 425),
-            (325, 525),
-            (175, 575),   
-            (225, 450),
-            (175, 375)
-        ]
+        self.outer_track = [(214, 35), (35, 214), (35, 535), (214, 607), (392, 535), (464, 607), (678, 678), (892, 535), (964, 285), (964, 35), (821, 107), (750, 178), (535, 35)]
+        self.inner_track = [(250, 250), (250, 464), (392, 392), (607, 392), (750, 464), (821, 250), (642, 321), (535, 250)]
 
         # Adjusted checkpoints to be centered in the track
-        self.checkpoints = [
-            (150, 135),  
-            (365, 155),  
-            (355, 565),  
-            (135, 575),  
-            (100, 375)   
-        ]
+        self.checkpoints = [(192, 214), (221, 521), (807, 507), (821, 192), (535, 142)]
 
         self.current_checkpoint = 0
         self.laps = 0
@@ -193,7 +163,7 @@ class CarRacingGame:
         # 4. Penalties
         # Collision penalty
         if collision:
-            reward -= 5  # Smaller penalty for hitting walls
+            reward -= 40  # Smaller penalty for hitting walls
 
         # After calculating final reward, store it
         self.current_reward += reward
@@ -379,6 +349,7 @@ class CarRacingGame:
                 print("Checkpoint Distance:", state[10])
                 print("Relative Angle:", state[11])
                 print("Checkpoint One-Hot:", state[12:17])
+                print("Wall Distances:", state[17:])
 
             # Use the render method instead of duplicating rendering code
             self.render(60)

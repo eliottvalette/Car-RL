@@ -20,10 +20,15 @@ class ActorCriticNetwork(nn.Module):
             nn.Linear(hidden_size, hidden_size),
             nn.LayerNorm(hidden_size),
             nn.ReLU(),
+            nn.Linear(hidden_size, hidden_size),
+            nn.LayerNorm(hidden_size),
+            nn.ReLU(),
         )
         
         # Actor (Policy) Stream
         self.actor_layers = nn.Sequential(
+            nn.Linear(hidden_size, hidden_size),
+            nn.ReLU(),
             nn.Linear(hidden_size, hidden_size // 2),
             nn.ReLU(),
             nn.Linear(hidden_size // 2, action_size),
@@ -31,6 +36,8 @@ class ActorCriticNetwork(nn.Module):
         
         # Critic (Value) Stream
         self.critic_layers = nn.Sequential(
+            nn.Linear(hidden_size, hidden_size),
+            nn.ReLU(),
             nn.Linear(hidden_size, hidden_size // 2),
             nn.ReLU(),
             nn.Linear(hidden_size // 2, 1),
@@ -72,7 +79,7 @@ class CarAgent:
         # Exploration parameters
         self.epsilon = 1
         self.epsilon_min = 0.001
-        self.epsilon_decay = 0.99
+        self.epsilon_decay = 0.992
         
         # Initialize network and optimizer
         self.network = ActorCriticNetwork(state_size, action_size).to(device)
