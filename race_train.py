@@ -7,7 +7,7 @@ import torch
 
 # Hyperparameters
 EPISODES = 1000
-STATE_SIZE = 17 
+STATE_SIZE = 17
 ACTION_SIZE = 4
 
 # Constants

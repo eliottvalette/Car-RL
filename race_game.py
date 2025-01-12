@@ -73,6 +73,10 @@ class CarRacingGame:
         self.steps = 0         
         self.current_reward = 0  
 
+        # Add detection box size
+        self.detection_box_width = 80  # Twice the car width
+        self.detection_box_height = 40 # Twice the car height
+
     def reset(self):
         self.car_pos = [80, 150]
         self.car_angle = 0
@@ -194,7 +198,7 @@ class CarRacingGame:
         self.current_reward += reward
         
         return self.get_state(), reward, self.done, {}
-
+    
     def get_state(self):
         car_pos = np.array(self.car_pos) / np.array([self.WIDTH, self.HEIGHT])
         car_speed = np.array([self.car_speed * math.cos(math.radians(self.car_angle)), 
@@ -229,8 +233,7 @@ class CarRacingGame:
         if cross_product < 0:
             angle = -angle
         normalized_relative_angle = angle / math.pi
-
-        # Concatenate all state components
+        
         concate_all_state = np.concatenate([car_pos, car_speed, car_angle, checkpoint, 
                                           to_checkpoint, checkpoint_distance, checkpoint_one_hot,
                                           [normalized_relative_angle]])
@@ -308,6 +311,7 @@ class CarRacingGame:
                 print("Checkpoint Direction:", state[8:10])
                 print("Checkpoint Distance:", state[10])
                 print("Relative Angle:", state[11])
+                print("Checkpoint One-Hot:", state[12:17])
 
             # Use the render method instead of duplicating rendering code
             self.render(60)
