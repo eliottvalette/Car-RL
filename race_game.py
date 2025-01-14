@@ -161,7 +161,7 @@ class CarRacingGame:
             reward += 150
 
         # 3. Speed-based continuous reward
-        speed_reward = self.car_speed * 0.8 - 1.0
+        speed_reward = (self.car_speed - 1.0) * 0.6
         reward += speed_reward
 
         # 4. Penalties
