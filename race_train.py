@@ -48,7 +48,7 @@ for episode in range(EPISODES):
         total_reward += reward
         step_count += 1
 
-        if episode%1 == 0:
+        if episode%10 == 0:
             env.render(fps = 1000)
 
     scores.append(total_reward)

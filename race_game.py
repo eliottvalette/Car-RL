@@ -152,22 +152,17 @@ class CarRacingGame:
         new_distance = np.linalg.norm(np.array(self.checkpoints[self.current_checkpoint]) - np.array(self.car_pos))
 
         if new_distance < prev_distance:
-            speed_bonus = max(self.car_speed, 0) * 0.4
-            reward += speed_bonus
+            reward += 0.2
         else :
-            speed_malus = max(self.car_speed, 0) * 0.4
-            reward -= speed_malus
+            reward -= 0.2
 
         # 2. Checkpoint rewards
         if checkpoint_rect.collidepoint(self.car_pos):
-            base_checkpoint_reward = 150
-            # Additional reward for maintaining speed through checkpoint
-            speed_bonus = max(self.car_speed, 0) * 2
-            reward += base_checkpoint_reward + speed_bonus
+            reward += 150
 
-        # 3. Lap completion reward
-        if self.current_checkpoint == 0 and checkpoint_rect.collidepoint(self.car_pos):
-            reward += 50 * (self.laps + 1)  # Increasing reward for each lap
+        # 3. Speed-based continuous reward
+        speed_reward = self.car_speed * 0.8 - 1.0
+        reward += speed_reward
 
         # 4. Penalties
         # Collision penalty
@@ -204,8 +199,8 @@ class CarRacingGame:
                     x4, y4 = end_wall
                     
                     denominator = (x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4)
-                    if denominator == 0:  # Lines are parallel
-                        continue
+                    if denominator == 0:
+                        continue                        
                     
                     t = ((x1 - x3) * (y3 - y4) - (y1 - y3) * (x3 - x4)) / denominator
                     u = -((x1 - x2) * (y1 - y3) - (y1 - y2) * (x1 - x3)) / denominator
