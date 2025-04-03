@@ -15,34 +15,66 @@ class CarRacingGame:
         self.screen = pygame.display.set_mode((self.WIDTH, self.HEIGHT))
         pygame.display.set_caption("Car Racing RL Environment")
 
-        # Colors
-        self.WHITE = (255, 255, 255)
-        self.BLACK = (0, 0, 0)
-        self.RED = (255, 0, 0)
-        self.GREEN = (0, 255, 0)
-        self.BLUE = (0, 0, 255)
+        # Nouvelle palette de couleurs
+        self.COLORS = {
+            'background': (34, 139, 34),
+            'grass': (34, 139, 34),  # Piste en gris clair
+            'track': (200, 200, 200),    # Herbe en vert gazon
+            'car': (255, 0, 0),
+            'checkpoint_active': (255, 215, 0),
+            'checkpoint_inactive': (70, 70, 70),
+            'text': (0, 0, 0),
+            'speed_gauge': (200, 200, 200),
+            'speed_needle': (255, 0, 0),
+            'laser': (255, 0, 0),      # Couleur des lasers
+            'laser_point': (255, 100, 100)  # Couleur des points d'intersection
+        }
 
         # Track boundaries with wider road
         self.outer_track = config.outer_track_complex
-        
         self.inner_track = config.inner_track_complex
-
-        # Adjusted checkpoints to be centered in the track
         self.checkpoints = config.checkpoints_complex
 
         self.current_checkpoint = rd.randint(0, len(self.checkpoints) - 1)
         self.laps = 0
         self.done = False
 
-        # Car properties
-        self.car_img = pygame.Surface((40, 20), pygame.SRCALPHA)
-        pygame.draw.polygon(self.car_img, self.RED, [(0, 10), (40, 0), (40, 20)])
+        # Amélioration de la voiture
+        # Création d'une surface plus grande pour la F1
+        self.car_img = pygame.Surface((60, 30), pygame.SRCALPHA)
+        
+        # Couleurs pour la F1
+        f1_main_color = self.COLORS['car']
+        
+        # Corps principal de la F1
+        pygame.draw.ellipse(self.car_img, f1_main_color, (15, 5, 30, 20))
+        
+        # Aileron avant
+        pygame.draw.rect(self.car_img, f1_main_color, (5, 10, 15, 10))
+        pygame.draw.rect(self.car_img, f1_main_color, (0, 8, 5, 14))
+        
+        # Aileron arrière
+        pygame.draw.rect(self.car_img, f1_main_color, (45, 10, 10, 10))
+        pygame.draw.rect(self.car_img, f1_main_color, (55, 8, 5, 14))
+        
+        # Pneus/roues
+        pygame.draw.ellipse(self.car_img, (0, 0, 0), (10, 2, 8, 6))   # Avant gauche
+        pygame.draw.ellipse(self.car_img, (0, 0, 0), (10, 22, 8, 6))  # Avant droite
+        pygame.draw.ellipse(self.car_img, (0, 0, 0), (40, 2, 8, 6))   # Arrière gauche
+        pygame.draw.ellipse(self.car_img, (0, 0, 0), (40, 22, 8, 6))  # Arrière droite
+        
+        # Détails supplémentaires
+        pygame.draw.rect(self.car_img, f1_main_color, (22, 5, 16, 20), 1)  # Contour du corps
+        pygame.draw.line(self.car_img, f1_main_color, (30, 5), (30, 25), 1)  # Ligne centrale
+
         self.car_pos = config.complex_spawns[self.current_checkpoint]
         self.car_angle = config.complex_rotations[self.current_checkpoint]
         self.car_speed = 0
 
         # Rendering
         self.clock = pygame.time.Clock()
+        self.font = pygame.font.Font(None, 36)
+        self.small_font = pygame.font.Font(None, 24)
 
         self.max_steps = 2_000  
         self.steps = 0         
@@ -52,6 +84,9 @@ class CarRacingGame:
         self.num_sensors = 8
         self.sensor_range = 100 
         self.sensor_angles = [i * (360 / self.num_sensors) for i in range(self.num_sensors)]
+
+        # Effet de particules pour les checkpoints
+        self.checkpoint_particles = []
 
     def reset(self):
         self.current_checkpoint = rd.randint(0, len(self.checkpoints) - 1)
@@ -270,53 +305,60 @@ class CarRacingGame:
         return state
 
     def render(self, fps=60):
-        self.screen.fill(self.WHITE)
+        self.screen.fill(self.COLORS['background'])
 
-        # Draw both track boundaries
-        pygame.draw.lines(self.screen, self.BLACK, True, self.outer_track, 2)
-        pygame.draw.lines(self.screen, self.BLACK, True, self.inner_track, 2)
+        # Dessiner l'herbe (extérieur)
+        pygame.draw.polygon(self.screen, self.COLORS['track'], self.outer_track)
+        # Dessiner la piste (intérieur)
+        pygame.draw.polygon(self.screen, self.COLORS['grass'], self.inner_track)
 
-        # Fill track area
-        track_surface = pygame.Surface((self.WIDTH, self.HEIGHT), pygame.SRCALPHA)
-        pygame.draw.polygon(track_surface, (200, 200, 200, 128), self.outer_track)
-        pygame.draw.polygon(track_surface, (255, 255, 255, 255), self.inner_track)
-        self.screen.blit(track_surface, (0, 0))
-
-        # Draw checkpoints with visible collision boxes
+        # Dessiner les checkpoints
         for i, cp in enumerate(self.checkpoints):
-            color = self.GREEN if i == self.current_checkpoint else self.BLUE
-            # Draw checkpoint circle
-            pygame.draw.circle(self.screen, color, cp, 10)
-            # Draw checkpoint collision box
-            checkpoint_rect = pygame.Rect(0, 0, 40, 40)
-            checkpoint_rect.center = cp
-            pygame.draw.rect(self.screen, color, checkpoint_rect, 1)
+            color = self.COLORS['checkpoint_active'] if i == self.current_checkpoint else self.COLORS['checkpoint_inactive']
+            pygame.draw.circle(self.screen, color, cp, 15)
+            pygame.draw.circle(self.screen, (255, 255, 255), cp, 10)
 
-        # Draw the car
+        # Dessiner la voiture
         rotated_car = pygame.transform.rotate(self.car_img, self.car_angle)
         car_rect = rotated_car.get_rect(center=self.car_pos)
         self.screen.blit(rotated_car, car_rect)
-        
-        # Draw UI text
-        font = pygame.font.Font(None, 36)
-        speed_text = font.render(f'Speed: {self.car_speed:.1f}', True, self.BLACK)
-        lap_text = font.render(f'Laps: {self.laps}', True, self.BLACK)
-        reward_text = font.render(f'Reward: {self.current_reward:.2f}', True, self.BLACK)
-        self.screen.blit(speed_text, (10, 10))
-        self.screen.blit(lap_text, (200, 10))
-        self.screen.blit(reward_text, (390, 10))
 
-        # Draw sensor lines and intersection points
+        # Dessiner l'interface utilisateur améliorée
+        # Jauge de vitesse
+        speed_gauge_pos = (self.WIDTH - 100, 50)
+        pygame.draw.circle(self.screen, self.COLORS['speed_gauge'], speed_gauge_pos, 30)
+        speed_angle = (self.car_speed / 3) * 180  # Normaliser la vitesse
+        end_x = speed_gauge_pos[0] + 25 * math.cos(math.radians(speed_angle - 90))
+        end_y = speed_gauge_pos[1] + 25 * math.sin(math.radians(speed_angle - 90))
+        pygame.draw.line(self.screen, self.COLORS['speed_needle'], speed_gauge_pos, (end_x, end_y), 3)
+
+        # Informations de jeu
+        speed_text = self.font.render(f'Vitesse: {self.car_speed:.1f}', True, self.COLORS['text'])
+        lap_text = self.font.render(f'Tours: {self.laps}', True, self.COLORS['text'])
+        reward_text = self.font.render(f'Score: {self.current_reward:.0f}', True, self.COLORS['text'])
+        
+        self.screen.blit(speed_text, (10, 10))
+        self.screen.blit(lap_text, (10, 50))
+        self.screen.blit(reward_text, (10, 90))
+
+        """
+        # Dessiner les capteurs
         for angle, distance in zip(self.sensor_angles, self.get_wall_distances()):
             sensor_angle = math.radians(self.car_angle + angle)
             end_x = self.car_pos[0] + math.cos(sensor_angle) * (distance * self.sensor_range)
             end_y = self.car_pos[1] - math.sin(sensor_angle) * (distance * self.sensor_range)
             
-            # Draw sensor lines
-            pygame.draw.line(self.screen, (255, 0, 0), self.car_pos, (end_x, end_y), 1)
-            # Draw intersection points
-            pygame.draw.circle(self.screen, (0, 255, 0), (int(end_x), int(end_y)), 3)
-        
+            # Capteurs plus visibles avec effet de brillance
+            # Ligne principale
+            pygame.draw.line(self.screen, self.COLORS['laser'], self.car_pos, (end_x, end_y), 3)
+            # Effet de brillance
+            pygame.draw.line(self.screen, (255, 200, 200), self.car_pos, (end_x, end_y), 1)
+            
+            # Point d'intersection plus visible
+            pygame.draw.circle(self.screen, self.COLORS['laser_point'], (int(end_x), int(end_y)), 5)
+            pygame.draw.circle(self.screen, (255, 255, 255), (int(end_x), int(end_y)), 2)
+        """
+
         pygame.display.flip()
         self.clock.tick(fps)
 
