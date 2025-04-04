@@ -27,7 +27,9 @@ class CarRacingGame:
             'speed_gauge': (200, 200, 200),
             'speed_needle': (255, 0, 0),
             'laser': (255, 0, 0),      # Couleur des lasers
-            'laser_point': (255, 100, 100)  # Couleur des points d'intersection
+            'laser_point': (255, 100, 100),  # Couleur des points d'intersection
+            'border_red': (255, 0, 0),      # Bordure rouge
+            'border_white': (255, 255, 255)  # Bordure blanche
         }
 
         # Track boundaries with wider road
@@ -311,6 +313,43 @@ class CarRacingGame:
         
         return state
 
+    def draw_striped_border(self, points, width=10):
+        """Dessine une bordure rayée rouge et blanche autour du circuit"""
+        for i in range(len(points)):
+            start = points[i]
+            end = points[(i + 1) % len(points)]
+            
+            # Calculer la longueur et l'angle du segment
+            dx = end[0] - start[0]
+            dy = end[1] - start[1]
+            length = math.sqrt(dx*dx + dy*dy)
+            angle = math.atan2(dy, dx)
+            
+            # Nombre de rayures (chaque rayure = 20 pixels)
+            stripe_length = 20
+            num_stripes = max(2, int(length / stripe_length))
+            actual_stripe_length = length / num_stripes
+            
+            # Dessiner chaque rayure alternée rouge et blanche
+            for j in range(num_stripes):
+                # Calculer les points de début et de fin de cette rayure
+                stripe_start_x = start[0] + j * actual_stripe_length * math.cos(angle)
+                stripe_start_y = start[1] + j * actual_stripe_length * math.sin(angle)
+                stripe_end_x = start[0] + (j + 1) * actual_stripe_length * math.cos(angle)
+                stripe_end_y = start[1] + (j + 1) * actual_stripe_length * math.sin(angle)
+                
+                # Alterner rouge et blanc
+                color = self.COLORS['border_red'] if j % 2 == 0 else self.COLORS['border_white']
+                
+                # Dessiner la rayure
+                pygame.draw.line(
+                    self.screen, 
+                    color, 
+                    (stripe_start_x, stripe_start_y), 
+                    (stripe_end_x, stripe_end_y), 
+                    width
+                )
+
     def render(self, fps=60):
         self.screen.fill(self.COLORS['background'])
 
@@ -318,6 +357,10 @@ class CarRacingGame:
         pygame.draw.polygon(self.screen, self.COLORS['track'], self.outer_border)
         # Dessiner la piste (intérieur)
         pygame.draw.polygon(self.screen, self.COLORS['grass'], self.inner_border)
+        
+        # Dessiner les bordures rayées rouge et blanc
+        self.draw_striped_border(self.outer_border, width=8)
+        self.draw_striped_border(self.inner_border, width=8)
 
         # Dessiner les checkpoints
         for i, cp in enumerate(self.checkpoints):
