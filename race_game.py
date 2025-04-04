@@ -18,13 +18,13 @@ class CarRacingGame:
         # Nouvelle palette de couleurs
         self.COLORS = {
             'background': (34, 139, 34),
-            'grass': (34, 139, 34),  # Piste en gris clair
-            'track': (200, 200, 200),    # Herbe en vert gazon
+            'grass': (34, 139, 34),  # Herbe en vert gazon
+            'track': (200, 200, 200), # Piste en gris clair   
             'car': (255, 0, 0),
             'checkpoint_active': (255, 215, 0),
             'checkpoint_inactive': (70, 70, 70),
             'text': (0, 0, 0),
-            'speed_gauge': (200, 200, 200),
+            'speed_gauge': (255, 255, 255),
             'speed_needle': (255, 0, 0),
             'laser': (255, 0, 0),      # Couleur des lasers
             'laser_point': (255, 100, 100),  # Couleur des points d'intersection
@@ -383,9 +383,9 @@ class CarRacingGame:
         pygame.draw.line(self.screen, self.COLORS['speed_needle'], speed_gauge_pos, (end_x, end_y), 3)
 
         # Informations de jeu
-        speed_text = self.font.render(f'Vitesse: {self.car_speed:.1f}', True, self.COLORS['text'])
-        lap_text = self.font.render(f'Tours: {self.laps}', True, self.COLORS['text'])
-        reward_text = self.font.render(f'Score: {self.current_reward:.0f}', True, self.COLORS['text'])
+        speed_text = self.font.render(f'Speed: {self.car_speed:.1f}', True, self.COLORS['text'])
+        lap_text = self.font.render(f'Laps: {self.laps}', True, self.COLORS['text'])
+        reward_text = self.font.render(f'Reward: {self.current_reward:.0f}', True, self.COLORS['text'])
         
         self.screen.blit(speed_text, (10, 10))
         self.screen.blit(lap_text, (10, 50))
