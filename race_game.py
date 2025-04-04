@@ -29,7 +29,8 @@ class CarRacingGame:
             'laser': (255, 0, 0),      # Couleur des lasers
             'laser_point': (255, 100, 100),  # Couleur des points d'intersection
             'border_red': (255, 0, 0),      # Bordure rouge
-            'border_white': (255, 255, 255)  # Bordure blanche
+            'border_white': (255, 255, 255),  # Bordure blanche
+            'info_container': (0, 0, 0, 150)  # Conteneur d'info semi-transparent (RGBA)
         }
 
         # Track boundaries with wider road
@@ -382,14 +383,21 @@ class CarRacingGame:
         end_y = speed_gauge_pos[1] + 25 * math.sin(math.radians(speed_angle - 90))
         pygame.draw.line(self.screen, self.COLORS['speed_needle'], speed_gauge_pos, (end_x, end_y), 3)
 
+        # Créer un conteneur semi-transparent pour les informations
+        info_surface = pygame.Surface((200, 130), pygame.SRCALPHA)
+        # Dessiner un rectangle arrondi semi-transparent
+        pygame.draw.rect(info_surface, self.COLORS['info_container'], (0, 0, 200, 130), border_radius=10)
+        # Afficher le conteneur d'informations
+        self.screen.blit(info_surface, (5, 5))
+
         # Informations de jeu
-        speed_text = self.font.render(f'Speed: {self.car_speed:.1f}', True, self.COLORS['text'])
-        lap_text = self.font.render(f'Laps: {self.laps}', True, self.COLORS['text'])
-        reward_text = self.font.render(f'Reward: {self.current_reward:.0f}', True, self.COLORS['text'])
+        speed_text = self.font.render(f'Speed: {self.car_speed:.1f}', True, self.COLORS['border_white'])
+        lap_text = self.font.render(f'Laps: {self.laps}', True, self.COLORS['border_white'])
+        reward_text = self.font.render(f'Reward: {self.current_reward:.0f}', True, self.COLORS['border_white'])
         
-        self.screen.blit(speed_text, (10, 10))
-        self.screen.blit(lap_text, (10, 50))
-        self.screen.blit(reward_text, (10, 90))
+        self.screen.blit(speed_text, (20, 20))
+        self.screen.blit(lap_text, (20, 60))
+        self.screen.blit(reward_text, (20, 100))
 
         """
         # Dessiner les capteurs
