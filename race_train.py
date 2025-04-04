@@ -4,14 +4,17 @@ from race_agent import CarAgent
 import numpy as np
 import matplotlib.pyplot as plt
 import torch
+import time
+
+time.sleep(3)
 
 # Hyperparameters
-EPISODES = 1000
+EPISODES = 1_000
 STATE_SIZE = 27
 ACTION_SIZE = 4
 
 # Constants
-LOAD_MODEL = True
+LOAD_MODEL = False
 
 # Initialize environment and agent
 env = CarRacingGame()

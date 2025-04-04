@@ -1,6 +1,6 @@
 class Config():
     def __init__(self):
-        self.outer_track_complex = [
+        self.outer_border_complex = [
             # Top-Left Corner (1)
             (50, 50),
 
@@ -31,7 +31,7 @@ class Config():
             (50, 750)
         ]
 
-        self.inner_track_complex = [
+        self.inner_border_complex = [
             # Top-Left Corner (1)
             (150, 150),
 
@@ -93,7 +93,7 @@ class Config():
             270
         ]
 
-        self.outer_track_simple = [
+        self.outer_border_simple = [
             # Top-Left Corner (1)
             (50, 50),
             # Top-Right Corner (2)
@@ -104,7 +104,7 @@ class Config():
             (50, 750)
         ]
 
-        self.inner_track_simple = [
+        self.inner_border_simple = [
             # Top-Left Corner (1)
             (150, 150),
             # Top-Right Corner (2)

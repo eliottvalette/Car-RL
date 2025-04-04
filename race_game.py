@@ -31,11 +31,11 @@ class CarRacingGame:
         }
 
         # Track boundaries with wider road
-        self.outer_track = config.outer_track_complex
-        self.inner_track = config.inner_track_complex
+        self.outer_border = config.outer_border_complex
+        self.inner_border = config.inner_border_complex
         self.checkpoints = config.checkpoints_complex
 
-        self.current_checkpoint = rd.randint(0, len(self.checkpoints) - 1)
+        self.current_checkpoint = 0
         self.laps = 0
         self.done = False
 
@@ -45,23 +45,30 @@ class CarRacingGame:
         
         # Couleurs pour la F1
         f1_main_color = self.COLORS['car']
+        arrow_color = (255, 255, 0)  # Jaune vif pour la flèche directionelle
         
         # Corps principal de la F1
         pygame.draw.ellipse(self.car_img, f1_main_color, (15, 5, 30, 20))
         
-        # Aileron avant
+        # Aileron avant (en fait c'est l'arrière)
         pygame.draw.rect(self.car_img, f1_main_color, (5, 10, 15, 10))
         pygame.draw.rect(self.car_img, f1_main_color, (0, 8, 5, 14))
         
-        # Aileron arrière
+        # Aileron arrière (en fait c'est l'avant)
         pygame.draw.rect(self.car_img, f1_main_color, (45, 10, 10, 10))
         pygame.draw.rect(self.car_img, f1_main_color, (55, 8, 5, 14))
         
+        # Flèche directionnelle à l'avant (du côté droit de la voiture)
+        pygame.draw.polygon(self.car_img, arrow_color, [(60, 15), (52, 10), (52, 20)])
+        
+        # Cockpit (réintégré)
+        pygame.draw.ellipse(self.car_img, (0, 0, 0), (25, 10, 10, 8))
+        
         # Pneus/roues
-        pygame.draw.ellipse(self.car_img, (0, 0, 0), (10, 2, 8, 6))   # Avant gauche
-        pygame.draw.ellipse(self.car_img, (0, 0, 0), (10, 22, 8, 6))  # Avant droite
-        pygame.draw.ellipse(self.car_img, (0, 0, 0), (40, 2, 8, 6))   # Arrière gauche
-        pygame.draw.ellipse(self.car_img, (0, 0, 0), (40, 22, 8, 6))  # Arrière droite
+        pygame.draw.ellipse(self.car_img, (0, 0, 0), (10, 2, 8, 6))   # Arrière gauche
+        pygame.draw.ellipse(self.car_img, (0, 0, 0), (10, 22, 8, 6))  # Arrière droite
+        pygame.draw.ellipse(self.car_img, (0, 0, 0), (40, 2, 8, 6))   # Avant gauche
+        pygame.draw.ellipse(self.car_img, (0, 0, 0), (40, 22, 8, 6))  # Avant droite
         
         # Détails supplémentaires
         pygame.draw.rect(self.car_img, f1_main_color, (22, 5, 16, 20), 1)  # Contour du corps
@@ -89,7 +96,7 @@ class CarRacingGame:
         self.checkpoint_particles = []
 
     def reset(self):
-        self.current_checkpoint = rd.randint(0, len(self.checkpoints) - 1)
+        self.current_checkpoint = 0
         self.car_pos = config.complex_spawns[self.current_checkpoint]
         self.car_angle = config.complex_rotations[self.current_checkpoint]
         self.car_speed = 0
@@ -132,7 +139,7 @@ class CarRacingGame:
         
         buffer = 5
         # Check both tracks with different behaviors
-        for track_idx, track in enumerate([self.outer_track, self.inner_track]):
+        for track_idx, track in enumerate([self.outer_border, self.inner_border]):
             for i in range(len(track)):
                 start = track[i]
                 end = track[(i + 1) % len(track)]
@@ -222,7 +229,7 @@ class CarRacingGame:
             min_distance = self.sensor_range  # Default to max range
             
             # Check both tracks
-            for track in [self.outer_track, self.inner_track]:
+            for track in [self.outer_border, self.inner_border]:
                 for i in range(len(track)):
                     start_wall = track[i]
                     end_wall = track[(i + 1) % len(track)]
@@ -308,9 +315,9 @@ class CarRacingGame:
         self.screen.fill(self.COLORS['background'])
 
         # Dessiner l'herbe (extérieur)
-        pygame.draw.polygon(self.screen, self.COLORS['track'], self.outer_track)
+        pygame.draw.polygon(self.screen, self.COLORS['track'], self.outer_border)
         # Dessiner la piste (intérieur)
-        pygame.draw.polygon(self.screen, self.COLORS['grass'], self.inner_track)
+        pygame.draw.polygon(self.screen, self.COLORS['grass'], self.inner_border)
 
         # Dessiner les checkpoints
         for i, cp in enumerate(self.checkpoints):
